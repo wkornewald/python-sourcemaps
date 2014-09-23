@@ -228,11 +228,13 @@ TOKEN_SPEC = (
 token_re = re.compile('|'.join('(?P<%s>%s)' % pair for pair in TOKEN_SPEC),
                       re.UNICODE | re.MULTILINE | re.DOTALL)
 
-def tokenize(content, src):
+def identity_tokenize(content, src):
     in_comment = False
     for line_num, line in enumerate(content.splitlines()):
         if line.strip():
             start_column = len(line) - len(line.lstrip())
+            if start_column:
+                yield Token(line_num, 0, src, line_num, 0)
             yield Token(line_num, start_column, src, line_num, start_column)
         for match in token_re.finditer(line):
             kind = match.lastgroup
@@ -249,8 +251,8 @@ def tokenize(content, src):
                 if column > start_column:
                     yield Token(line_num, column, src, line_num, column)
 
-def mapify(content, src):
-    return SourceMap(tokenize(content, src), {src: content})
+def identity_map(content, src):
+    return SourceMap(identity_tokenize(content, src), {src: content})
 
 class SourceMap(object):
     def __init__(self, tokens=(), sources_content=None, raw=None):
