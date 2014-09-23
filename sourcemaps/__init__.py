@@ -212,6 +212,9 @@ def discover(source):
             return result[0]
     return None
 
+def strip(content):
+    return source_map_url_re.sub('', content)
+
 # namedtuples have a nice repr and they support comparison (useful for bisect search)
 class Token(namedtuple('TokenBase', 'dst_line dst_col src src_line src_col name')):
     __slots__ = ()
