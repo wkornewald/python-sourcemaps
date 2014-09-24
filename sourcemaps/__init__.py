@@ -222,6 +222,11 @@ class Token(namedtuple('TokenBase', 'dst_line dst_col src src_line src_col name'
         return super(Token, cls).__new__(cls, dst_line, dst_col,
                                          src, src_line, src_col, name)
 
+def shift_tokens(tokens, dst_line=0, dst_col=0, src_line=0, src_col=0):
+    return [t._replace(dst_line=t.dst_line + dst_line, dst_col=t.dst_col + dst_col,
+                       src_line=t.src_line + src_line, src_col=t.src_col + src_col)
+            for t in tokens]
+
 TOKEN_SPEC = (
     ('LINECOMMENT', r'//'),
     ('COMMENTSTART', r'/\*'),
