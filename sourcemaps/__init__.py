@@ -270,7 +270,12 @@ class SourceMap(object):
         map(self.add_token, tokens)
 
     def add_token(self, token):
-        if not self.tokens or token > self.tokens[-1]:
+        if not self.tokens or token[:2] > self.tokens[-1][:2]:
             self.tokens.append(token)
         else:
-            self.tokens.insert(bisect_right(self.tokens, token), token)
+            index = bisect_right(self.tokens, token)
+            if index and self.tokens[index - 1][:2] == token[:2]:
+                raise ValueError('Token with given dst_line and dst_col already exists:\n'
+                                 'Existing: {}\nAdded: {}'.format(self.tokens[index - 1],
+                                                                  token))
+            self.tokens.insert(index, token)
