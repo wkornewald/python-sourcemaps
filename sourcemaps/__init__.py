@@ -147,7 +147,7 @@ def decode(source):
 
     sources_content = {src: content
                        for src, content in zip(sources, smap.get('sourcesContent',
-                                                                 (None,) * len(src)))
+                                                                 (None,) * len(sources)))
                        if content is not None}
     return SourceMap(tokens, sources_content, raw=smap)
 
