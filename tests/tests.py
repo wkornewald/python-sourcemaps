@@ -1,7 +1,6 @@
 # The unit tests are based on
 # https://github.com/mattrobenolt/python-sourcemap
-from sourcemap.core import (decode_sourcemap, decode_vlqs, discover_sourcemap,
-    encode_sourcemap)
+import sourcemaps
 import json
 import unittest
 
@@ -33,10 +32,10 @@ here
         self.assertNotFoundSourcemap(fixture)
 
     def assertNotFoundSourcemap(self, fixture):
-        self.assertIsNone(discover_sourcemap(fixture))
+        self.assertIsNone(sourcemaps.discover(fixture))
 
     def assertFoundSourcemap(self, fixture, expected):
-        self.assertEqual(discover_sourcemap(fixture), expected)
+        self.assertEqual(sourcemaps.discover(fixture), expected)
 
 class SourceMapTestCase(unittest.TestCase):
     def get_fixtures(self, base):
@@ -53,17 +52,17 @@ class SourceMapTestCase(unittest.TestCase):
         assert xdata['mappings'].count(';') == ydata['mappings'].count(';')
         for encoded_line, orig_line in zip(xdata['mappings'].split(';'),
                                            ydata['mappings'].split(';')):
-            assert [decode_vlqs(s)[:4] for s in encoded_line.split(',')] == \
-                   [decode_vlqs(s)[:4] for s in orig_line.split(',')]
+            assert [sourcemaps.decode_vlqs(s)[:4] for s in encoded_line.split(',')] == \
+                   [sourcemaps.decode_vlqs(s)[:4] for s in orig_line.split(',')]
 
     def test_jquery(self):
         source, minified, min_map = self.get_fixtures('jquery')
 
         source_lines = source.splitlines()
 
-        assert discover_sourcemap(minified) == 'jquery.min.map'
+        assert sourcemaps.discover(minified) == 'jquery.min.map'
 
-        sourcemap = decode_sourcemap(min_map)
+        sourcemap = sourcemaps.decode(min_map)
         assert sourcemap.raw == json.loads(min_map)
         for token in sourcemap.tokens:
             # Ignore tokens that are None.
@@ -84,16 +83,16 @@ class SourceMapTestCase(unittest.TestCase):
                 continue
             assert token.name == substring
 
-        self.compare_sourcemaps(encode_sourcemap(sourcemap), min_map)
+        self.compare_sourcemaps(sourcemaps.encode(sourcemap), min_map)
 
     def test_coolstuff(self):
         source, minified, min_map = self.get_fixtures('coolstuff')
 
         source_lines = source.splitlines()
 
-        assert discover_sourcemap(minified) == 'tests/fixtures/coolstuff.min.map'
+        assert sourcemaps.discover(minified) == 'tests/fixtures/coolstuff.min.map'
 
-        sourcemap = decode_sourcemap(min_map)
+        sourcemap = sourcemaps.decode(min_map)
         min_map_data = json.loads(min_map)
         assert sourcemap.raw == min_map_data
         for token in sourcemap.tokens:
@@ -106,10 +105,10 @@ class SourceMapTestCase(unittest.TestCase):
             substring = source_line[start:end]
             assert token.name == substring
 
-        self.compare_sourcemaps(encode_sourcemap(sourcemap), min_map)
+        self.compare_sourcemaps(sourcemaps.encode(sourcemap), min_map)
 
     def test_unicode_names(self):
         _, _, min_map = self.get_fixtures('unicode')
 
         # This shouldn't blow up
-        self.compare_sourcemaps(encode_sourcemap(decode_sourcemap(min_map)), min_map)
+        self.compare_sourcemaps(sourcemaps.encode(sourcemaps.decode(min_map)), min_map)
