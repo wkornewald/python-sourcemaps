@@ -80,7 +80,7 @@ def encode_vlq(num):
         result += BASE64_CHARS[digit]
     return result
 
-def decode(source):
+def decode(source, ignore_errors=True):
     if isinstance(source, dict):
         smap = source
     else:
@@ -149,7 +149,7 @@ def decode(source):
                        for src, content in zip(sources, smap.get('sourcesContent',
                                                                  (None,) * len(sources)))
                        if content is not None}
-    return SourceMap(tokens, sources_content, raw=smap)
+    return SourceMap(tokens, sources_content, raw=smap, ignore_errors=ignore_errors)
 
 def encode(sourcemap):
     sources = {}
@@ -263,10 +263,11 @@ def identity_map(content, src):
     return SourceMap(identity_tokenize(content, src), {src: content})
 
 class SourceMap(object):
-    def __init__(self, tokens=(), sources_content=None, raw=None):
+    def __init__(self, tokens=(), sources_content=None, raw=None, ignore_errors=False):
         self.tokens = []
         self.sources_content = {} if sources_content is None else sources_content.copy()
         self.raw = {} if raw is None else raw.copy()
+        self.ignore_errors = ignore_errors
         map(self.add_token, tokens)
 
     def add_token(self, token):
@@ -274,7 +275,8 @@ class SourceMap(object):
             self.tokens.append(token)
         else:
             index = bisect_right(self.tokens, token)
-            if index and self.tokens[index - 1][:2] == token[:2]:
+            if not self.ignore_errors and index and \
+                    self.tokens[index - 1][:2] == token[:2]:
                 raise ValueError('Token with given dst_line and dst_col already exists:\n'
                                  'Existing: {}\nAdded: {}'.format(self.tokens[index - 1],
                                                                   token))
